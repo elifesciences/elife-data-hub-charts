@@ -72,7 +72,7 @@ spec:
             - name: OAUTH_CLIENT_SECRET
               value: "{{ .Values.websiteAuthentication.googleOAuthClientSecret }}"
             - name: OAUTH_CALLBACK_URL
-              value: 'https://datahub-notebook.elifesciences.org/hub/oauth_callback'
+              value: "https://{{ .Values.dask.jupyter.websitePrefix }}.{{ .Values.airflow.service.websiteDomain }}/{{ .Values.websiteAuthentication.googleOAuthCallbackRouteJupyter }}"
           {{- if .Values.dask.jupyter.env }}
             {{- toYaml .Values.dask.jupyter.env | nindent 12 }}
           {{- end }}
