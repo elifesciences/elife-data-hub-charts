@@ -1,0 +1,13 @@
+apiVersion: v1
+description: elife data-hum specific deployment of airflow for building managing data pipelines
+name: libero-datahub
+version: 0.1.0
+appVersion: "latest"
+maintainers:
+  - name: elife.datahub
+    email: elife.datahub@elifesciences.org
+sources:
+  - https://airflow.apache.org/
+keywords:
+  - data pipeline
+  - dag

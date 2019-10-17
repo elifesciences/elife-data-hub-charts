@@ -1,0 +1,120 @@
+{{ if .Values.dask.jupyter.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "dask.fullname" . }}-jupyter
+  labels:
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "airflow.chart" . }}
+    component: jupyter
+spec:
+  replicas: {{ .Values.dask.jupyter.replicas }}
+  selector:
+    matchLabels:
+      app: {{ template "airflow.name" . }}
+      release: {{ .Release.Name | quote }}
+      component: jupyter
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "airflow.name" . }}
+        release: {{ .Release.Name | quote }}
+        component: jupyter
+    spec:
+      imagePullSecrets:
+        {{- toYaml .Values.dask.jupyter.image.pullSecrets | nindent 8 }}
+
+      {{- if .Values.dags.initContainer.enabled }}
+      initContainers:
+        {{- range .Values.dags.git.git_urls }}
+        - name: git-clone-{{ printf "%s" .name | replace "_" "-"  }}
+          image: {{ $.Values.dags.initContainer.image.repository }}:{{ $.Values.dags.initContainer.image.tag }}  # Any image with git will do
+          imagePullPolicy: {{ $.Values.dags.initContainer.image.pullPolicy }}
+          command:
+            - /usr/local/git/git-clone.sh
+          args:
+            - "{{ .url }}"
+            - "{{ .ref }}"
+            - "{{ .name }}"
+            - "{{ .installPriority }}"
+            - "/dags"
+          volumeMounts:
+            - name: git-clone
+              mountPath: /usr/local/git
+            - name: dags-data
+              mountPath: /dags
+            {{- if $.Values.dags.git.secret }}
+            - name: git-clone-secret
+              mountPath: /keys
+            {{- end }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ template "dask.fullname" . }}-jupyter
+          image: "{{ .Values.dask.jupyter.image.repository }}:{{ .Values.dask.jupyter.image.tag }}"
+          imagePullPolicy: {{ .Values.dask.jupyter.image.pullPolicy }}
+          ports:
+            - containerPort: 8888
+          resources:
+            {{- toYaml .Values.dask.jupyter.resources | nindent 12 }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/jovyan/.jupyter
+          env:
+            - name: DASK_SCHEDULER_ADDRESS
+              value: {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }}
+            - name: OAUTH_CLIENT_ID
+              value: "{{ .Values.websiteAuthentication.googleOAuthClientID }}"
+            - name: OAUTH_CLIENT_SECRET
+              value: "{{ .Values.websiteAuthentication.googleOAuthClientSecret }}"
+            - name: OAUTH_CALLBACK_URL
+              value: 'https://datahub-notebook.elifesciences.org/hub/oauth_callback'
+          {{- if .Values.dask.jupyter.env }}
+            {{- toYaml .Values.dask.jupyter.env | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "dask.fullname" . }}-jupyter-config
+{{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "dask.fullname" . }}-jupyter-config
+        - name: scripts
+          configMap:
+            name: {{ template "airflow.fullname" . }}-scripts
+            defaultMode: 0755
+        {{- range .Values.web.secrets }}
+        - name: {{ . }}-volume
+          secret:
+            secretName: {{ . }}
+        {{- end }}
+        - name: dags-data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+              claimName: {{ .Values.persistence.existingClaim | default (include "airflow.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.logsPersistence.enabled }}
+        - name: logs-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.logsPersistence.existingClaim | default (printf "%s-logs" (include "airflow.fullname" . | trunc 58 )) }}
+        {{- end }}
+        {{- if .Values.dags.initContainer.enabled }}
+        - name: git-clone
+          configMap:
+            name: {{ template "airflow.fullname" . }}-git-clone
+            defaultMode: 0755
+        {{- if .Values.dags.git.secret }}
+        - name: git-clone-secret
+          secret:
+            secretName: {{ .Values.dags.git.secret }}
+            defaultMode: 0700
+        {{- end }}
+        {{- end }}

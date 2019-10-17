@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "dask.fullname" . }}-scheduler
+  labels:
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "airflow.chart" . }}
+    component: scheduler
+spec:
+  replicas: {{ .Values.dask.scheduler.replicas }}
+  selector:
+    matchLabels:
+      app: {{ template "airflow.name" . }}
+      release: {{ .Release.Name | quote }}
+      component: scheduler
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "airflow.name" . }}
+        release: {{ .Release.Name | quote }}
+        component: scheduler
+    spec:
+      imagePullSecrets:
+        {{- toYaml .Values.dask.scheduler.image.pullSecrets | nindent 8 }}
+      containers:
+        - name: {{ template "dask.fullname" . }}-scheduler
+          image: "{{ .Values.dask.scheduler.image.repository }}:{{ .Values.dask.scheduler.image.tag }}"
+          imagePullPolicy: {{ .Values.dask.scheduler.image.pullPolicy }}
+          args:
+            - dask-scheduler
+            - --port
+            - "{{ .Values.dask.scheduler.servicePort }}"
+            - --bokeh-port
+            - "8787"
+          ports:
+            - containerPort: 8786
+            - containerPort: 8787
+          resources:
+            {{- toYaml .Values.dask.scheduler.resources | nindent 12 }}
+          env:
+            {{- toYaml .Values.dask.scheduler.env | nindent 12 }}
