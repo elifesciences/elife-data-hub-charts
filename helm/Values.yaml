@@ -3,7 +3,7 @@ airflow:
   service:
     type: "LoadBalancer"
     websitePrefix: datahub-pipeline
-
+    websiteDomain: elifesciences.org
   image:
     ## docker-airflow image with dask executor
     repository: owonibi/airflow_dask_executor
@@ -127,6 +127,7 @@ websiteAuthentication:
   googleOAuthClientSecret: "" #create from google
   googleOAuthCallbackRoute: "/oauth2callback"
   googleOAuthAuthenticatedDomain: "elifesciences.org"
+  googleOAuthCallbackRouteJupyter: "hub/oauth_callback"
 
 scheduler:
   resources: {}
