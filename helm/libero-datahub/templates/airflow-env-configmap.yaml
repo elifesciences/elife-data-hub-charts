@@ -7,6 +7,8 @@ metadata:
     chart: {{ template "airflow.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
 data:
   ## Force UTC timezone
   TZ: Etc/UTC
@@ -36,8 +38,8 @@ data:
   AIRFLOW__GOOGLE__OAUTH_CALLBACK_ROUTE: "{{ .Values.websiteAuthentication.googleOAuthCallbackRoute }}"
   AIRFLOW__GOOGLE__DOMAIN: "{{ .Values.websiteAuthentication.googleOAuthAuthenticatedDomain }}"
   {{- end }}
-  # Note: changing `Values.airflow.config` won't change the configmap checksum and so won't make
+  # Note: changing `Values.airflow.customEnvironmentVariables` won't change the configmap checksum and so won't make
   # the pods to restart
-  {{- range $setting, $option := .Values.airflow.config }}
+  {{- range $setting, $option := .Values.airflow.customEnvironmentVariables }}
   {{ $setting }}: "{{ $option }}"
   {{- end }}

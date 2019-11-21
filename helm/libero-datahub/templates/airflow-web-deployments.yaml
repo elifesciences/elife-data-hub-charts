@@ -8,6 +8,8 @@ metadata:
     chart: {{ template "airflow.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
 spec:
   replicas: {{ .Values.airflow.webReplicas }}
   minReadySeconds: 120
@@ -28,9 +30,6 @@ spec:
         checksum/config-env: {{ include (print $.Template.BasePath "/airflow-env-configmap.yaml") . | sha256sum }}
         checksum/config-git-clone: {{ include (print $.Template.BasePath "/generic-git-clone-configmap.yaml") . | sha256sum }}
         checksum/config-scripts: {{ include (print $.Template.BasePath "/generic-scripts-configmap.yaml") . | sha256sum }}
-{{- if .Values.airflow.podAnnotations }}
-{{ toYaml .Values.airflow.podAnnotations | indent 8 }}
-{{- end }}
       labels:
         app: {{ template "airflow.name" . }}
         component: web
@@ -84,36 +83,15 @@ spec:
           volumeMounts:
             - name: scripts
               mountPath: /usr/local/scripts
-          {{- $secretsDir := .Values.web.secretsDir -}}
-          {{- range .Values.web.secrets }}
-            - name: {{ . }}-volume
+          {{- range .Values.airflow.secrets }}
+            - name: {{ .name }}-volume
               readOnly: true
-              mountPath: {{ $secretsDir }}/{{ . }}
+              mountPath: {{ .secretsDir }}/{{ .name }}
           {{- end }}
-          {{- if .Values.persistence.enabled }}
-            - name: dags-data
-              mountPath: {{ .Values.dags.path }}
-              subPath: {{ .Values.persistence.subPath | default "" }}
-          {{- else if .Values.dags.initContainer.enabled }}
+          {{- if .Values.dags.initContainer.enabled }}
             - name: dags-data
               mountPath: {{ .Values.dags.path }}
           {{- end }}
-          {{- if .Values.logsPersistence.enabled }}
-            - name: logs-data
-              mountPath: {{ .Values.logs.path }}
-              subPath: {{ .Values.logsPersistence.subPath | default "" }}
-          {{- end }}
-          {{- range .Values.airflow.extraConfigmapMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              readOnly: {{ .readOnly }}
-              {{ if .subPath }}
-              subPath: {{ .subPath }}
-              {{ end }}
-          {{- end }}
-{{- if .Values.airflow.extraVolumeMounts }}
-{{ toYaml .Values.airflow.extraVolumeMounts | indent 12 }}
-{{- end }}
           args:
             - "bash"
             - "-c"
@@ -136,32 +114,18 @@ spec:
               echo 'executing webserver...' &&
               airflow webserver
             {{- end }}
-
-{{- if .Values.airflow.extraContainers }}
-{{ toYaml .Values.airflow.extraContainers | indent 8 }}
-{{- end }}
       volumes:
         - name: scripts
           configMap:
             name: {{ template "airflow.fullname" . }}-scripts
             defaultMode: 0755
-        {{- range .Values.web.secrets }}
-        - name: {{ . }}-volume
+        {{- range .Values.airflow.secrets }}
+        - name: {{ .name }}-volume
           secret:
-            secretName: {{ . }}
+            secretName: {{ .name }}
         {{- end }}
         - name: dags-data
-        {{- if .Values.persistence.enabled }}
-          persistentVolumeClaim:
-              claimName: {{ .Values.persistence.existingClaim | default (include "airflow.fullname" .) }}
-        {{- else }}
           emptyDir: {}
-        {{- end }}
-        {{- if .Values.logsPersistence.enabled }}
-        - name: logs-data
-          persistentVolumeClaim:
-            claimName: {{ .Values.logsPersistence.existingClaim | default (printf "%s-logs" (include "airflow.fullname" . | trunc 58 )) }}
-        {{- end }}
         {{- if .Values.dags.initContainer.enabled }}
         - name: git-clone
           configMap:
@@ -174,11 +138,3 @@ spec:
             defaultMode: 0700
         {{- end }}
         {{- end }}
-        {{- range .Values.airflow.extraConfigmapMounts }}
-        - name: {{ .name }}
-          configMap:
-            name: {{ .configMap }}
-        {{- end }}
-{{- if .Values.airflow.extraVolumes }}
-{{ toYaml .Values.airflow.extraVolumes | indent 8 }}
-{{- end }}

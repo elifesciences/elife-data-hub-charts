@@ -7,14 +7,16 @@ metadata:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: {{ template "airflow.chart" . }}
-    component: scheduler
+    component: dask-scheduler
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
 spec:
   replicas: {{ .Values.dask.scheduler.replicas }}
   selector:
     matchLabels:
       app: {{ template "airflow.name" . }}
       release: {{ .Release.Name | quote }}
-      component: scheduler
+      component: dask-scheduler
   strategy:
     type: RollingUpdate
   template:
@@ -22,24 +24,29 @@ spec:
       labels:
         app: {{ template "airflow.name" . }}
         release: {{ .Release.Name | quote }}
-        component: scheduler
+        component: dask-scheduler
     spec:
+      {{- if .Values.airflow.image.pullSecret }}
       imagePullSecrets:
-        {{- toYaml .Values.dask.scheduler.image.pullSecrets | nindent 8 }}
+        - name: {{ .Values.airflow.image.pullSecret }}
+      {{- end }}
+      restartPolicy: Always
       containers:
         - name: {{ template "dask.fullname" . }}-scheduler
-          image: "{{ .Values.dask.scheduler.image.repository }}:{{ .Values.dask.scheduler.image.tag }}"
-          imagePullPolicy: {{ .Values.dask.scheduler.image.pullPolicy }}
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy}}
+          envFrom:
+          - configMapRef:
+              name: "{{ template "airflow.fullname" . }}-env"
+          env:
+          {{- include "airflow.mapenvsecrets" . | indent 10 }}
           args:
-            - dask-scheduler
-            - --port
-            - "{{ .Values.dask.scheduler.servicePort }}"
-            - --bokeh-port
-            - "8787"
+            - "bash"
+            - "-c"
+            - >
+              dask-scheduler --port {{ .Values.dask.scheduler.servicePort }} --bokeh-port 8787
           ports:
             - containerPort: 8786
             - containerPort: 8787
           resources:
             {{- toYaml .Values.dask.scheduler.resources | nindent 12 }}
-          env:
-            {{- toYaml .Values.dask.scheduler.env | nindent 12 }}

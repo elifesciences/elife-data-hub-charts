@@ -9,13 +9,10 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.airflow.websitePrefix }}.elifesciences.org
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.airflow.service.websitePrefix }}.elifesciences.org
     service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.clientCertificate }}
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-  {{- if .Values.airflow.service.annotations }}
-  {{ toYaml .Values.airflow.service.annotations | trim | indent 4 }}
-  {{- end }}
 spec:
   type: {{ .Values.airflow.service.type }}
   selector:

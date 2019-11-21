@@ -47,10 +47,10 @@ Create a random string if the supplied key does not exist
 
 {{/*
 Create a set of environment variables to be mounted in web, scheduler, and woker pods.
-For the database passwords, we actually use the secretes created by the postgres and redis sub-charts.
+For the database passwords, we actually use the secretes created by the postgres sub-charts.
 Note that the environment variables themselves are determined by the puckel/docker-airflow image.
 See script/entrypoint.sh in that repo for more info.
-The key names for postgres and redis are fixed, which is consistent with the subcharts.
+The key names for postgres are fixed, which is consistent with the subcharts.
 */}}
 {{- define "airflow.mapenvsecrets" }}
   - name: POSTGRES_USER
@@ -62,9 +62,6 @@ The key names for postgres and redis are fixed, which is consistent with the sub
         name: {{ default (include "airflow.postgresql.fullname" .) .Values.postgresql.existingSecret }}
         key: {{ .Values.postgresql.existingSecretKey }}
   {{- end }}
-  {{- if .Values.airflow.extraEnv }}
-{{ toYaml .Values.airflow.extraEnv | indent 2 }}
-  {{- end }}
 {{- end }}
 
 {{/*
@@ -72,14 +69,10 @@ Create a default fully qualified dask executor name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "dask.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
 {{- printf "%s-%s" "dask" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
 {{- printf "%s-%s-%s" "dask" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
 {{- end -}}
 {{- end -}}

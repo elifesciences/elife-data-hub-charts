@@ -4,8 +4,8 @@ name: libero-datahub
 version: 0.1.0
 appVersion: "latest"
 maintainers:
-  - name: elife.datahub
-    email: elife.datahub@elifesciences.org
+  - name: elife.libero-datahub
+    email: elife.libero-datahub@elifesciences.org
 sources:
   - https://airflow.apache.org/
 keywords:

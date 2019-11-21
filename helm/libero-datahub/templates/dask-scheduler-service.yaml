@@ -7,7 +7,7 @@ metadata:
     heritage: {{ .Release.Service | quote }}
     release: {{ .Release.Name | quote }}
     chart: {{ template "airflow.chart" . }}
-    component: scheduler
+    component: dask-scheduler
 spec:
   ports:
     - name: {{ template "dask.fullname" . }}-scheduler
@@ -19,5 +19,5 @@ spec:
   selector:
     app: {{ template "airflow.name" . }}
     release: {{ .Release.Name | quote }}
-    component: scheduler
+    component: dask-scheduler
   type: {{ .Values.dask.scheduler.serviceType }}

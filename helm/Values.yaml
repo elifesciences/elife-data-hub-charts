@@ -2,7 +2,7 @@ clientCertificate: "arn:aws:iam::512686554592:server-certificate/cloudfront/wild
 airflow:
   service:
     type: "LoadBalancer"
-    websitePrefix: datahub-pipeline
+    websitePrefix: libero-datahub-pipeline
     websiteDomain: elifesciences.org
   image:
     ## docker-airflow image with dask executor
@@ -14,91 +14,32 @@ airflow:
     pullPolicy: IfNotPresent
     ## image pull secret for private images
     pullSecret:
-  ##
   ## Set schedulerNumRuns to control how the scheduler behaves:
   ##   -1 will let him looping indefinitively but it will never update the DAG
   ##   1 will have the scheduler quit after each refresh, but kubernetes will restart it.
   ## A long running scheduler process, ends up not scheduling some tasks. We still don’t know the exact cause,
   ## unfortunately. Airflow has a built-in workaround in the form of the `num_runs` flag.
   schedulerNumRuns: "-1"
-  ##
-  ## attempt to pickle the DAG object to send over to the workers, instead of letting workers run their version of the code.
-  ## See the Airflow documentation for the --do_pickle argument: https://airflow.apache.org/cli.html#scheduler
-  schedulerDoPickle: true
-  ##
   ## Number of replicas for web server.
   webReplicas: 1
-  ##
-  ## Custom airflow configuration environment variables
-  ## Use this to override any airflow setting settings defining environment variables in the
-  ## following form: AIRFLOW__<section>__<key>.
-  ## See the Airflow documentation: https://airflow.readthedocs.io/en/stable/howto/set-config.html?highlight=setting-configuration
-  ## Example:
-  ##   config:
-  ##     AIRFLOW__CORE__EXPOSE_CONFIG: "True"
-  ##     HTTP_PROXY: "http://proxy.mycompany.com:123"
-  config: {}
+  ## Custom  environment variables
+  ## Use this to add environment variables to the container (including airflow variables to be overriden)
+  customEnvironmentVariables:
+    CROSSREF_CONFIG_S3_BUCKET: ci-elife-data-pipeline
+    CROSSREF_CONFIG_S3_OBJECT_KEY: "airflow_test/crossref_event/elife-data-pipeline.config.yaml"
+    DEFAULT_CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
+
+  ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
+  secrets:
+    - name: aws
+      secretsDir: /var/airflow/.aws
+    - name: gcp
+      secretsDir: /var/airflow/.gcp
+
   ##
   ## Configure pod disruption budget for the scheduler
   podDisruptionBudget:
     maxUnavailable: 1
-  ## Add custom connections
-  ## Use this to add Airflow connections for operators you use
-  ## For each connection - the id and type have to be defined.
-  ## All the other parameters are optional
-  ## Connections will be created with a script that is stored
-  ## in a K8s secret and mounted into the scheduler container
-  ## Example:
-  ##   connections:
-  ##   - id: my_aws
-  ##     type: aws
-  ##     extra: '{"aws_access_key_id": "**********", "aws_secret_access_key": "***", "region_name":"eu-central-1"}'
-  connections: []
-
-  ## Add airflow variables
-  ## This should be a json string with your variables in it
-  ## Examples:
-  ##   variables: '{ "environment": "dev" }'
-  variables: {}
-
-  ## Add airflow ppols
-  ## This should be a json string with your pools in it
-  ## Examples:
-  ##   pools: '{ "example": { "description": "This is an example of a pool", "slots": 2 } }'
-  pools: {}
-
-  ##
-  ## Annotations for the Scheduler, Worker and Web pods
-  podAnnotations: {}
-  ## Example:
-  ## iam.amazonaws.com/role: airflow-Role
-
-  extraInitContainers: []
-  ## Additional init containers to run before the Scheduler pods.
-  ## for example, be used to run a sidecar that chown Logs storage .
-  # - name: volume-mount-hack
-  #   image: busybox
-  #   command: ["sh", "-c", "chown -R 1000:1000 logs"]
-  #   volumeMounts:
-  #     - mountPath: /usr/local/airflow/logs
-  #       name: logs-data
-
-  extraContainers: []
-  ## Additional containers to run alongside the Scheduler, Worker and Web pods
-  ## This could, for example, be used to run a sidecar that syncs DAGs from object storage.
-  # - name: s3-sync
-  #   image: my-user/s3sync:latest
-  #   volumeMounts:
-  #   - name: synchronised-dags
-  #     mountPath: /dags
-  extraVolumeMounts: []
-  ## Additional volumeMounts to the main containers in the Scheduler, Worker and Web pods.
-  # - name: synchronised-dags
-  #   mountPath: /usr/local/airflow/dags
-  extraVolumes: []
-  ## Additional volumes for the Scheduler, Worker and Web pods.
-  # - name: synchronised-dags
-  #   emptyDir: {}
 
   ## Run initdb when the scheduler starts.
   initdb: true
@@ -114,12 +55,6 @@ web:
   initialStartupDelay: "60"
   initialDelaySeconds: "360"
 
-  ##
-  ## Directory in which to mount secrets on webserver nodes.
-  secretsDir: /var/airflow/secrets
-  ##
-  ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
-  secrets: []
 
 websiteAuthentication:
   enabled: true
@@ -137,53 +72,6 @@ scheduler:
     # requests:
     #   cpu: "500m"
     #   memory: "512Mi"
-
-## Storage configuration for DAGs
-persistence:
-  ##
-  ## enable persistance storage
-  enabled: false
-  ## Existing claim to use
-  # existingClaim: nil
-  ## Existing claim's subPath to use, e.g. "dags" (optional)
-  # subPath: ""
-  ##
-  ## Persistent Volume Storage Class
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack)
-  # storageClass: default
-  accessMode: ReadWriteOnce
-  ## Persistant storage size request
-  size: 1Gi
-
-## Storage configuration for logs
-logsPersistence:
-  ##
-  ## enable persistance storage
-  enabled: false
-  ##
-  ## Existing claim to use
-  # existingClaim: nil
-  ## Existing claim's subPath to use, e.g. "logs" (optional)
-  # subPath: ""
-  ##
-  ## Persistent Volume Storage Class
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack)
-  ##
-  ## A configuration for shared log storage requires a `storageClass` that
-  ## supports the `ReadWriteMany` accessMode, such as NFS or AWS EFS.
-  # storageClass: default
-  accessMode: ReadWriteOnce
-  ##
-  ## Persistant storage size request
-  size: 1Gi
 
 ##
 ## Configure logs
@@ -238,13 +126,6 @@ dags:
 dask:
   scheduler:
     name: scheduler
-    image:
-      repository: "daskdev/dask"
-      tag: 1.1.5
-      pullPolicy: IfNotPresent
-      # See https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-      pullSecrets:
-      #  - name: regcred
     replicas: 1
     # serviceType: "ClusterIP"
     # serviceType: "NodePort"
@@ -264,24 +145,10 @@ dask:
 
   worker:
     name: worker
-    image:
-      repository: "daskdev/dask"
-      tag: 1.1.5
-      pullPolicy: IfNotPresent
-      # dask_worker: "dask-cuda-worker"
-      dask_worker: "dask-worker"
-      pullSecrets:
-      #  - name: regcred
     replicas: 1
-    aptPackages: >-
     default_resources:  # overwritten by resource limits if they exist
       cpu: 1
       memory: "2GiB"
-    env:
-    #  - name: EXTRA_CONDA_PACKAGES
-    #    value: numba xarray -c conda-forge
-    #  - name: EXTRA_PIP_PACKAGES
-    #    value: s3fs dask-ml --upgrade
     resources: {}
     #  limits:
     #    cpu: 1
@@ -292,35 +159,6 @@ dask:
     #    memory: 3G
     #    nvidia.com/gpu: 1
 
-  jupyter:
-    name: jupyter
-    enabled: true
-    image:
-      repository: "daskdev/dask-notebook"
-      tag: 1.1.5
-      pullPolicy: IfNotPresent
-      pullSecrets:
-      #  - name: regcred
-    replicas: 1
-    # serviceType: "ClusterIP"
-    # serviceType: "NodePort"
-    serviceType: "LoadBalancer"
-    servicePort: 443
-    # This hash corresponds to the password 'dask'
-    password: 'sha1:aae8550c0a44:9507d45e087d5ee481a5ce9f4f16f37a0867318c'
-    websitePrefix: datahub-notebook
-    env:
-    #  - name: EXTRA_CONDA_PACKAGES
-    #    value: "numba xarray -c exitconda-forge"
-       - name: EXTRA_PIP_PACKAGES
-         value: "oauthenticator"
-    resources: {}
-    #  limits:
-    #    cpu: 2
-    #    memory: 6G
-    #  requests:
-    #    cpu: 2
-    #    memory: 6G
 ##
 ## Configuration values for the postgresql dependency.
 postgresql:

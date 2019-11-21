@@ -8,6 +8,8 @@ metadata:
     chart: {{ template "airflow.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
 spec:
   replicas: 1
   strategy:
@@ -28,11 +30,6 @@ spec:
         checksum/config-env: {{ include (print $.Template.BasePath "/airflow-env-configmap.yaml") . | sha256sum }}
         checksum/config-git-clone: {{ include (print $.Template.BasePath "/generic-git-clone-configmap.yaml") . | sha256sum }}
         checksum/config-scripts: {{ include (print $.Template.BasePath "/generic-scripts-configmap.yaml") . | sha256sum }}
-        checksum/config-variables-pools: {{ include (print $.Template.BasePath "/airflow-variables-pools-configmap.yaml") . | sha256sum }}
-        checksum/secret-connections: {{ include (print $.Template.BasePath "/airflow-connections-secret.yaml") . | sha256sum }}
-{{- if .Values.airflow.podAnnotations }}
-{{ toYaml .Values.airflow.podAnnotations | indent 8 }}
-{{- end }}
       labels:
         app: {{ template "airflow.name" . }}
         component: scheduler
@@ -68,12 +65,6 @@ spec:
             {{- end }}
         {{- end }}
       {{- end }}
-{{- if and ( .Values.airflow.extraInitContainers ) ( .Values.dags.initContainer.enabled ) }}
-{{ toYaml .Values.airflow.extraInitContainers | indent 8 }}
-{{- else if and ( .Values.airflow.extraInitContainers ) ( not .Values.dags.initContainer.enabled ) }}
-      initContainers:
-{{ toYaml .Values.airflow.extraInitContainers | indent 8 }}
-{{- end }}
       containers:
         - name: {{ .Chart.Name }}-scheduler
           image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
@@ -84,42 +75,19 @@ spec:
           env:
           {{- include "airflow.mapenvsecrets" . | indent 10 }}
           resources:
-{{ toYaml .Values.scheduler.resources | indent 12 }}
+            {{ toYaml .Values.scheduler.resources | nindent 12 }}
           volumeMounts:
             - name: scripts
               mountPath: /usr/local/scripts
-          {{- if .Values.persistence.enabled }}
+          {{- range .Values.airflow.secrets }}
+            - name: {{ .name }}-volume
+              readOnly: true
+              mountPath: {{ .secretsDir }}/{{ .name }}
+          {{- end }}
+          {{- if .Values.dags.initContainer.enabled }}
             - name: dags-data
               mountPath: {{ .Values.dags.path }}
-              subPath: {{ .Values.persistence.subPath | default "" }}
-          {{- else if .Values.dags.initContainer.enabled }}
-            - name: dags-data
-              mountPath: {{ .Values.dags.path }}
           {{- end }}
-          {{- if .Values.logsPersistence.enabled }}
-            - name: logs-data
-              mountPath: {{ .Values.logs.path }}
-              subPath: {{ .Values.logsPersistence.subPath | default "" }}
-          {{- end }}
-          {{- if .Values.airflow.connections }}
-            - name: connections
-              mountPath: /usr/local/connections
-          {{- end}}
-          {{- if or .Values.airflow.variables .Values.airflow.pools }}
-            - name: variables-pools
-              mountPath: /usr/local/variables-pools/
-          {{- end}}
-          {{- range .Values.airflow.extraConfigmapMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              readOnly: {{ .readOnly }}
-              {{ if .subPath }}
-              subPath: {{ .subPath }}
-              {{ end }}
-          {{- end }}
-{{- if .Values.airflow.extraVolumeMounts }}
-{{ toYaml .Values.airflow.extraVolumeMounts | indent 12 }}
-{{- end }}
           args:
             - "bash"
             - "-c"
@@ -130,25 +98,12 @@ spec:
               echo $AIRFLOW__DASK__CLUSTER_ADDRESS &&
               echo 'installing requirements...' &&
               mkdir -p /usr/local/airflow/.local/bin &&
-              mkdir /usr/local/airflow/tayo &&
               export PATH=/usr/local/airflow/.local/bin:$PATH &&
               /usr/local/scripts/install-requirements.sh &&
               {{- if .Values.airflow.initdb }}
               echo "executing initdb" &&
               airflow initdb &&
               {{- end }}
-            {{- if .Values.airflow.connections }}
-              echo "adding connections" &&
-              /usr/local/connections/add-connections.sh &&
-            {{- end }}
-            {{- if .Values.airflow.variables }}
-              echo "adding variables" &&
-              airflow variables -i /usr/local/variables-pools/variables.json &&
-            {{- end }}
-            {{- if .Values.airflow.pools }}
-              echo "adding pools" &&
-              airflow pool -i /usr/local/variables-pools/pools.json &&
-            {{- end }}
               echo "executing scheduler" &&
               airflow scheduler -n {{ .Values.airflow.schedulerNumRuns }}
           {{- else }}
@@ -157,47 +112,26 @@ spec:
               sleep 10 &&
               echo $AIRFLOW__DASK__CLUSTER_ADDRESS &&
               mkdir -p /usr/local/airflow/.local/bin &&
-              mkdir /usr/local/airflow/tayo &&
               export PATH=/usr/local/airflow/.local/bin:$PATH &&
               {{- if .Values.airflow.initdb }}
               echo "executing initdb" &&
               airflow initdb &&
               {{- end }}
-            {{- if .Values.airflow.connections }}
-              echo "adding connections" &&
-              /usr/local/connections/add-connections.sh &&
-            {{- end }}
-            {{- if .Values.airflow.variables }}
-              echo "adding variables" &&
-              airflow variables -i /usr/local/variables-pools/variables.json &&
-            {{- end }}
-            {{- if .Values.airflow.pools }}
-              echo "adding pools" &&
-              airflow pool -i /usr/local/variables-pools/pools.json &&
-            {{- end }}
               echo "executing scheduler" &&
               airflow scheduler -n {{ .Values.airflow.schedulerNumRuns }}
           {{- end }}
-{{- if .Values.airflow.extraContainers }}
-{{ toYaml .Values.airflow.extraContainers | indent 8 }}
-{{- end }}
       volumes:
         - name: scripts
           configMap:
             name: {{ template "airflow.fullname" . }}-scripts
             defaultMode: 0755
+        {{- range .Values.airflow.secrets }}
+        - name: {{ .name }}-volume
+          secret:
+            secretName: {{ .name }}
+        {{- end }}
         - name: dags-data
-        {{- if .Values.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (include "airflow.fullname" .) }}
-        {{- else }}
           emptyDir: {}
-        {{- end }}
-        {{- if .Values.logsPersistence.enabled }}
-        - name: logs-data
-          persistentVolumeClaim:
-            claimName: {{ .Values.logsPersistence.existingClaim | default (printf "%s-logs" (include "airflow.fullname" . | trunc 58 )) }}
-        {{- end }}
         {{- if .Values.dags.initContainer.enabled }}
         - name: git-clone
           configMap:
@@ -210,23 +144,3 @@ spec:
             defaultMode: 0700
         {{- end }}
         {{- end }}
-        {{- if .Values.airflow.connections }}
-        - name: connections
-          secret:
-            secretName: {{ template "airflow.fullname" . }}-connections
-            defaultMode: 0755
-        {{- end }}
-        {{- if or .Values.airflow.variables .Values.airflow.pools }}
-        - name: variables-pools
-          configMap:
-            name: {{ template "airflow.fullname" . }}-variables-pools
-            defaultMode: 0755
-        {{- end }}
-        {{- range .Values.airflow.extraConfigmapMounts }}
-        - name: {{ .name }}
-          configMap:
-            name: {{ .configMap }}
-        {{- end }}
-{{- if .Values.airflow.extraVolumes }}
-{{ toYaml .Values.airflow.extraVolumes | indent 8 }}
-{{- end }}
