@@ -38,6 +38,7 @@ data:
   AIRFLOW__GOOGLE__OAUTH_CALLBACK_ROUTE: "{{ .Values.websiteAuthentication.googleOAuthCallbackRoute }}"
   AIRFLOW__GOOGLE__DOMAIN: "{{ .Values.websiteAuthentication.googleOAuthAuthenticatedDomain }}"
   {{- end }}
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
   # Note: changing `Values.airflow.customEnvironmentVariables` won't change the configmap checksum and so won't make
   # the pods to restart
   {{- range $setting, $option := .Values.airflow.customEnvironmentVariables }}

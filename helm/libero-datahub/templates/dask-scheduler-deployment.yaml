@@ -44,7 +44,7 @@ spec:
             - "bash"
             - "-c"
             - >
-              dask-scheduler --port {{ .Values.dask.scheduler.servicePort }} --bokeh-port 8787
+              dask-scheduler --port {{ .Values.dask.scheduler.servicePort }} --dashboard --dashboard-address 8787
           ports:
             - containerPort: 8786
             - containerPort: 8787

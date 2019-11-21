@@ -71,11 +71,11 @@ spec:
           {{- range .Values.airflow.secrets }}
             - name: {{ .name }}-volume
               readOnly: true
-              mountPath: {{ .secretsDir }}/{{ .name }}
+              mountPath: {{ .secretsDir }}
           {{- end }}
           {{- if .Values.dags.initContainer.enabled }}
             - name: dags-data
-              mountPath: {{ .Values.dags.path }}
+              mountPath: {{ .Values.dags.gitClonePath }}
           {{- end }}
           ports:
             - containerPort: 8789
@@ -88,7 +88,7 @@ spec:
               {{- if and ( .Values.dags.initContainer.enabled ) ( .Values.dags.initContainer.installRequirements ) }}
                 /usr/local/scripts/install-requirements.sh &&
               {{- end }}
-                {{ .Values.dask.worker.image.dask_worker }}  {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --no-bokeh
+                {{ .Values.dask.worker.dask_worker }}  {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --no-bokeh
                 {{- if .Values.dask.worker.resources.limits }}
                   {{ .Values.dask.worker.resources.limits.cpu | default .Values.dask.worker.default_resources.cpu | quote }} --memory-limit {{ .Values.dask.worker.resources.limits.memory | default .Values.dask.worker.default_resources.memory | quote }}
                 {{- end }}
@@ -97,28 +97,18 @@ spec:
           configMap:
             name: {{ template "airflow.fullname" . }}-scripts
             defaultMode: 0755
-        {{- range .Values.web.secrets }}
-        - name: {{ . }}-volume
+        {{- range .Values.airflow.secrets }}
+        - name: {{ .name }}-volume
           secret:
-            secretName: {{ . }}
+            secretName: {{ .name }}
         {{- end }}
         - name: dags-data
-        {{- if .Values.persistence.enabled }}
-          persistentVolumeClaim:
-              claimName: {{ .Values.persistence.existingClaim | default (include "airflow.fullname" .) }}
-        {{- else }}
           emptyDir: {}
-        {{- end }}
-        {{- if .Values.logsPersistence.enabled }}
-        - name: logs-data
-          persistentVolumeClaim:
-            claimName: {{ .Values.logsPersistence.existingClaim | default (printf "%s-logs" (include "airflow.fullname" . | trunc 58 )) }}
-        {{- end }}
         {{- if .Values.dags.initContainer.enabled }}
         - name: git-clone
           configMap:
             name: {{ template "airflow.fullname" . }}-git-clone
-            defaultMode: 0755
+            defaultMode: 0777
         {{- if .Values.dags.git.secret }}
         - name: git-clone-secret
           secret:

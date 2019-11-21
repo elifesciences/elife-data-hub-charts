@@ -10,13 +10,20 @@ metadata:
 data:
   install-requirements.sh: |
     #!/bin/sh -e
-    if [ ! -d {{ .Values.dags.path }} ]; then
-      echo "No folder {{ .Values.dags.path }}"
+    if [ ! -d {{ .Values.dags.gitClonePath }} ]; then
+      echo "No folder {{ .Values.dags.gitClonePath }}"
       exit 0
     fi
-    cd {{ .Values.dags.path }}
+    if [ ! -d {{ .Values.dags.path }} ]; then
+      mkdir -p {{ .Values.dags.path }}
+    fi
+    cd {{ .Values.dags.gitClonePath }}
     for dag_dir in */ ; do
-      if [ -f $dag_dir/requirements.txt ]; then
-            pip install --user -r $dag_dir/requirements.txt
+      if [ -f $dag_dir/install.sh ]; then
+          cp $dag_dir ~/$dag_dir -r
+          ~/$dag_dir/install.sh {{ .Values.dags.path }}
+      elif [ -f $dag_dir/requirements.txt ]; then
+          pip install --user -r $dag_dir/requirements.txt
+          cp $dag_dir {{ .Values.dags.path }} -r
       fi
     done
