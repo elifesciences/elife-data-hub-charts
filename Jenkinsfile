@@ -9,7 +9,7 @@ elifePipeline {
             commit = elifeGitRevision()
         }
         stage 'Build images', {
-            sh 'docker build ./helm'
+            sh 'docker build ./helm -t elifesciences/datahub-airflow'
             image = DockerImage.elifesciences(this, "datahub-airflow", commit)
         }
 
