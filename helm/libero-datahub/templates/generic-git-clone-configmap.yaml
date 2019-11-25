@@ -1,3 +1,4 @@
+# script for cloning git repos
 apiVersion: v1
 kind: ConfigMap
 metadata:

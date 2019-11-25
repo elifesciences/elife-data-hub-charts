@@ -1,3 +1,6 @@
+# script for installing repos
+# executed setup.py if  found and copies "dag folder" to airflow's dag folder,
+# otherwise copies all files to airflow's dag folder
 apiVersion: v1
 kind: ConfigMap
 metadata:

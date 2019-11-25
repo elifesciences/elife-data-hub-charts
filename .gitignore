@@ -1,3 +1,4 @@
 helm/libero-datahub/ssh_files
 helm/libero-datahub/aws_credentials
-helm/libero-datahub/gcp_credentials
+helm/libero-datahub/gcp_credentials.json
+install_script_full.sh
