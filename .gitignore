@@ -1,4 +1,3 @@
 helm/libero-datahub/ssh_files
-helm/values.yaml
 helm/libero-datahub/aws_credentials
 helm/libero-datahub/gcp_credentials

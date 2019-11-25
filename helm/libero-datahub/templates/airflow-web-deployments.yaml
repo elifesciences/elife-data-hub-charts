@@ -76,6 +76,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: "{{ template "airflow.fullname" . }}-env"
+            {{- if .Values.websiteAuthentication.enabled }}
+            - secretRef:
+                  name:  {{ .Values.websiteAuthentication.googleOAuthSecretName }}
+            {{- end }}
           env:
             {{- include "airflow.mapenvsecrets" . | indent 10 }}
           resources:

@@ -28,13 +28,13 @@ data:
   AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: "{{ printf "%s/%s" .Values.logs.path "dag_processor_manager/dag_processor_manager.log" }}"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: "{{ printf "%s/%s" .Values.logs.path "scheduler" }}"
   AIRFLOW__WEBSERVER__BASE_URL: "http://localhost:8080"
+  AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
+
   # Disabling XCom pickling for forward compatibility
   AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "false"
   {{- if .Values.websiteAuthentication.enabled }}
   AIRFLOW__WEBSERVER__AUTHENTICATE: "True"
   AIRFLOW__WEBSERVER__AUTH_BACKEND: "airflow.contrib.auth.backends.google_auth"
-  AIRFLOW__GOOGLE__CLIENT_ID: "{{ .Values.websiteAuthentication.googleOAuthClientID }}"
-  AIRFLOW__GOOGLE__CLIENT_SECRET: "{{ .Values.websiteAuthentication.googleOAuthClientSecret }}"
   AIRFLOW__GOOGLE__OAUTH_CALLBACK_ROUTE: "{{ .Values.websiteAuthentication.googleOAuthCallbackRoute }}"
   AIRFLOW__GOOGLE__DOMAIN: "{{ .Values.websiteAuthentication.googleOAuthAuthenticatedDomain }}"
   {{- end }}
