@@ -2,7 +2,7 @@ clientCertificate: "arn:aws:iam::512686554592:server-certificate/cloudfront/wild
 airflow:
   service:
     type: "LoadBalancer"
-    websitePrefix: libero-datahub-pipeline--test
+    websitePrefix: libero-data-hub--test
     websiteDomain: elifesciences.org
     externalPort: 443
   image:

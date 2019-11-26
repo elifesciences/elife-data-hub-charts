@@ -95,7 +95,6 @@ spec:
             - >
               echo 'waiting 10s...' &&
               sleep 10 &&
-              echo $AIRFLOW__DASK__CLUSTER_ADDRESS &&
               echo 'installing requirements...' &&
               mkdir -p /usr/local/airflow/.local/bin &&
               export PATH=/usr/local/airflow/.local/bin:$PATH &&
@@ -110,7 +109,6 @@ spec:
             - >
               echo 'waiting 10s...' &&
               sleep 10 &&
-              echo $AIRFLOW__DASK__CLUSTER_ADDRESS &&
               mkdir -p /usr/local/airflow/.local/bin &&
               export PATH=/usr/local/airflow/.local/bin:$PATH &&
               {{- if .Values.airflow.initdb }}
