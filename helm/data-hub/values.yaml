@@ -1,0 +1,159 @@
+airflow:
+  service:
+    type: "LoadBalancer"
+    ## dns hostname if when using external dns for the load balancer service
+    #dnsHostName: data-pipeline.my-organisation.org
+    #externalPort: 443
+    ## Client certificate for https service
+    #clientCertificate: "arn:aws:iam::32848334893:server-certificate/cloudfront/wildcard.my-organisation.org/2019.wildcard.my-organisation.org"
+  image:
+    ## docker-airflow image with dask executor
+    repository: elifesciences/data-hub-with-dags_unstable
+    #repository: elifesciences/data-hub-airflow
+    ## image tag
+    tag: 1575b089d529be3ff7247de3aeaa6f9ca3f6f53a
+    ## Image pull policy
+    ## values: Always or IfNotPresent
+    pullPolicy: IfNotPresent
+    ## image pull secret for private images
+    pullSecret:
+  ## Set schedulerNumRuns to control how the scheduler behaves:
+  ##   -1 will let him looping indefinitively but it will never update the DAG
+  ##   1 will have the scheduler quit after each refresh, but kubernetes will restart it.
+  ## A long running scheduler process, ends up not scheduling some tasks. We still don’t know the exact cause,
+  ## unfortunately. Airflow has a built-in workaround in the form of the `num_runs` flag.
+  schedulerNumRuns: "-1"
+  ## Number of replicas for web server.
+  webReplicas: 1
+  ## Custom  environment variables
+  ## Use this to add environment variables to the container (including airflow variables to be overriden)
+  customEnvironmentVariables:
+    CROSSREF_CONFIG_S3_BUCKET: s3-bucket-where-crossref-configuration=object-is-stored
+    CROSSREF_CONFIG_S3_OBJECT_KEY: "crossref-event/yaml-config.yaml"
+    CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
+    GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
+    DEPLOYMENT_ENV: dev
+  ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
+  ## They should be created before helm is deployed
+  #secrets:
+  #  - name: credentials
+  #    secretsDir: /usr/local/airflow/.aws
+  #  - name: gcp-credentials
+  #    secretsDir: /usr/local/airflow/.gcp
+  ## Configure pod disruption budget for the scheduler
+  podDisruptionBudget:
+    maxUnavailable: 1
+
+  ## Run initdb when the scheduler starts.
+  initdb: true
+
+web:
+  resources:
+    # limits:
+    #   cpu: "300m"
+    #   memory: "1Gi"
+    #requests:
+    #  cpu: 1
+    #  memory: "1Gi"
+  initialStartupDelay: "60"
+  initialDelaySeconds: "360"
+
+websiteAuthentication:
+  ## Set to true if google Oauth2 should be used for authentication
+  enabled: false
+  # keys AIRFLOW__GOOGLE__CLIENT_ID and AIRFLOW__GOOGLE__CLIENT_SECRET  (whose values must be created from google api)
+  # Must be pre-created as secret
+  googleOAuthSecretName: google-auth
+  googleOAuthCallbackRoute: "/oauth2callback"
+  googleOAuthAuthenticatedDomain: "elifesciences.org"
+
+scheduler:
+  resources: {}
+    # limits:
+    #   cpu: "1000m"
+    #   memory: "1Gi"
+    # requests:
+    #   cpu: "500m"
+    #   memory: "512Mi"
+
+## Configure logs
+logs:
+  path: /usr/local/airflow/logs
+
+## Configure DAGs deployment and update
+dags:
+  ## Note that this location is referred to in airflow.cfg, so if you change it, you must update airflow.cfg accordingly.
+  path: /usr/local/airflow/dags
+  ##
+  ## Set to True to prevent pickling DAGs from scheduler to workers
+  doNotPickle: false
+
+
+dask:
+  scheduler:
+    name: scheduler
+    replicas: 1
+    # "NodePort", "LoadBalancer" "ClusterIP"
+    serviceType: "NodePort"
+    servicePort: 8786
+    resources: {}
+    #  limits:
+    #    cpu: 1.8
+    #    memory: 6G
+    #  requests:
+    #    cpu: 1.8
+    #    memory: 6G
+
+  webUI:
+    name: webui
+    servicePort: 8787
+
+  worker:
+    name: worker
+    replicas: 2
+    default_resources:  # overwritten by resource limits if they exist
+      cpu: 1
+      memory: "2GiB"
+    resources: {}
+    dask_worker: "dask-worker"
+    #  limits:
+    #    cpu: 1
+    #    memory: 3G
+    #    nvidia.com/gpu: 1
+    #  requests:
+    #    cpu: 1
+    #    memory: 3G
+    #    nvidia.com/gpu: 1
+
+##
+## Configuration values for the postgresql dependency.
+postgresql:
+  ##
+  ## Use the PostgreSQL chart dependency.
+  ## Set to false if bringing your own PostgreSQL.
+  enabled: true
+  ##
+  ## The name of an existing secret that contains the postgres password.
+  existingSecret: airflow-postgres
+  ## Name of the key containing the secret.
+  existingSecretKey: postgres-password
+  ##
+  service:
+    port: 5432
+  ## PostgreSQL User to create.
+  postgresUser: postgres
+  ##
+  ## PostgreSQL Database to create.
+  postgresDatabase: airflow
+  ##
+  ## Persistent Volume Storage configuration.
+  persistence:
+    ##
+    ## Enable PostgreSQL persistence using Persistent Volume Claims.
+    enabled: true
+    ##
+    ## Persistant class
+    # storageClass: classname
+    ##
+    ## Access mode:
+    accessMode: ReadWriteOnce

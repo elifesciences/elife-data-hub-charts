@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "dask.fullname" . }}-worker
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
+spec:
+  serviceName: {{ template "dask.fullname" . }}-worker
+  replicas: {{ .Values.dask.worker.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      name: {{ template "dask.fullname" . }}-dask-worker
+      app: {{ template "airflow.name" . }}
+      heritage: {{ .Release.Service | quote }}
+      release: {{ .Release.Name }}
+      component: dask-worker
+      chart: {{ template "airflow.chart" . }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: {{ include (print $.Template.BasePath "/airflow-env-configmap.yaml") . | sha256sum }}
+      labels:
+        name: {{ template "dask.fullname" . }}-dask-worker
+        app: {{ template "airflow.name" . }}
+        heritage: {{ .Release.Service | quote }}
+        release: {{ .Release.Name }}
+        component: dask-worker
+        chart: {{ template "airflow.chart" . }}
+    spec:
+      {{- if .Values.airflow.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.airflow.image.pullSecret }}
+      {{- end }}
+      restartPolicy: Always
+      containers:
+        - name: {{ template "dask.fullname" . }}-worker
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy:  {{ .Values.airflow.image.pullPolicy}}
+          envFrom:
+          - configMapRef:
+              name: "{{ template "airflow.fullname" . }}-env"
+          env:
+          {{- include "airflow.mapenvsecrets" . | indent 10 }}
+          volumeMounts:
+          {{- range .Values.airflow.secrets }}
+            - name: {{ .name }}-volume
+              readOnly: true
+              mountPath: {{ .secretsDir }}
+          {{- end }}
+          ports:
+            -   containerPort: 8793
+                name: wlog
+                protocol: TCP
+          resources:
+            {{- toYaml .Values.dask.worker.resources | nindent 12 }}
+          args:
+            - "bash"
+            - "-c"
+            - >
+                $AIRFLOW_HOME/worker.sh {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --no-bokeh
+                {{- if .Values.dask.worker.resources.limits }}
+                  {{ .Values.dask.worker.resources.limits.cpu | default .Values.dask.worker.default_resources.cpu | quote }} --memory-limit {{ .Values.dask.worker.resources.limits.memory | default .Values.dask.worker.default_resources.memory | quote }}
+                {{- end }}
+      volumes:
+        {{- range .Values.airflow.secrets }}
+        - name: {{ .name }}-volume
+          secret:
+            secretName: {{ .name }}
+        {{- end }}

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "airflow.fullname" . }}-web
+  labels:
+    app: {{ template "airflow.name" . }}
+    component: web
+    chart: {{ template "airflow.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    {{- if (.Values.airflow.service.dnsHostName)  }}
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.airflow.service.dnsHostName }}
+    {{- if (.Values.clientCertificate) }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.clientCertificate }}
+    {{- end }}
+    ##enabling service.beta.kubernetes.io/aws-load-balancer-backend-protocol slows down the webserver response
+    ##don't know the reason yet
+    #service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: {{ .Values.airflow.service.externalPort | default 443 }}
+    {{- end }}
+spec:
+  type: {{ .Values.airflow.service.type }}
+  selector:
+    app: {{ template "airflow.name" . }}
+    component: web
+    release: {{ .Release.Name }}
+  ports:
+    - name: https
+      port: {{ .Values.airflow.service.externalPort | default 443 }}
+      protocol: TCP
+      targetPort: 8080

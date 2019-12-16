@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "dask.fullname" . }}-scheduler
+  labels:
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "airflow.chart" . }}
+    component: dask-scheduler
+  annotations:
+    # ensures that checksum of file changes every time helm unpdate is called, and installetion is updated
+    # even when there is no change to the any other values in the file
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
+spec:
+  replicas: {{ .Values.dask.scheduler.replicas }}
+  selector:
+    matchLabels:
+      app: {{ template "airflow.name" . }}
+      release: {{ .Release.Name | quote }}
+      component: dask-scheduler
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ template "airflow.name" . }}
+        release: {{ .Release.Name | quote }}
+        component: dask-scheduler
+    spec:
+      {{- if .Values.airflow.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.airflow.image.pullSecret }}
+      {{- end }}
+      restartPolicy: Always
+      containers:
+        - name: {{ template "dask.fullname" . }}-scheduler
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy}}
+          envFrom:
+          - configMapRef:
+              name: "{{ template "airflow.fullname" . }}-env"
+          env:
+          {{- include "airflow.mapenvsecrets" . | indent 10 }}
+          args:
+            - "bash"
+            - "-c"
+            - >
+              dask-scheduler --port {{ .Values.dask.scheduler.servicePort }} --dashboard --dashboard-address 8787
+          ports:
+            - containerPort: 8786
+            - containerPort: 8787
+          resources:
+            {{- toYaml .Values.dask.scheduler.resources | nindent 12 }}

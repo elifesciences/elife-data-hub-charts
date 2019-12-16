@@ -1,0 +1,15 @@
+apiVersion: v1
+description: Libero Data Hub K8s Deployment Of Airflow for Managing Data Pipelines
+name: data-hub
+version: 0.1.0
+appVersion: "latest"
+maintainers:
+  - name: elifesciences
+
+sources:
+  - https://github.com/helm/charts/tree/master/stable/airflow
+  - https://github.com/helm/charts/tree/master/stable/dask
+  - https://airflow.apache.org/
+keywords:
+  - data pipeline
+  - dag
