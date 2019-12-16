@@ -1,6 +1,1 @@
-helm/data-hub/ssh_files
-helm/data-hub/ssh_files_bkp
-helm/data-hub/aws_credentials
-helm/data-hub/aws_credentials_bkp
-helm/data-hub/gcp_credentials.json
-install_script_full.sh
+
