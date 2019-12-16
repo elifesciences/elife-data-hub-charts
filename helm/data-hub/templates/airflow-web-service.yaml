@@ -9,10 +9,16 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.airflow.service.websitePrefix }}.elifesciences.org
+    {{- if (.Values.airflow.service.dnsHostName)  }}
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.airflow.service.dnsHostName }}
+    {{- if (.Values.clientCertificate) }}
     service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.clientCertificate }}
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    {{- end }}
+    ##enabling service.beta.kubernetes.io/aws-load-balancer-backend-protocol slows down the webserver response
+    ##don't know the reason yet
+    #service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: {{ .Values.airflow.service.externalPort | default 443 }}
+    {{- end }}
 spec:
   type: {{ .Values.airflow.service.type }}
   selector:
@@ -20,7 +26,7 @@ spec:
     component: web
     release: {{ .Release.Name }}
   ports:
-    - name: web
-      protocol: TCP
+    - name: https
       port: {{ .Values.airflow.service.externalPort | default 443 }}
+      protocol: TCP
       targetPort: 8080

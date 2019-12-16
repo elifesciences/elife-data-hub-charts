@@ -1,15 +1,17 @@
-clientCertificate: "arn:aws:iam::512686554592:server-certificate/cloudfront/wildcard.elifesciences.org/2019.wildcard.elifesciences.org"
 airflow:
   service:
     type: "LoadBalancer"
-    websitePrefix: libero-data-hub--test
-    websiteDomain: elifesciences.org
-    externalPort: 443
+    ## dns hostname if when using external dns for the load balancer service
+    #dnsHostName: data-pipeline.my-organisation.org
+    #externalPort: 443
+    ## Client certificate for https service
+    #clientCertificate: "arn:aws:iam::32848334893:server-certificate/cloudfront/wildcard.my-organisation.org/2019.wildcard.my-organisation.org"
   image:
     ## docker-airflow image with dask executor
-    repository: elifesciences/datahub-airflow
+    repository: elifesciences/data-hub-with-dags_unstable
+    #repository: elifesciences/data-hub-airflow
     ## image tag
-    tag: latest
+    tag: 1575b089d529be3ff7247de3aeaa6f9ca3f6f53a
     ## Image pull policy
     ## values: Always or IfNotPresent
     pullPolicy: IfNotPresent
@@ -26,17 +28,18 @@ airflow:
   ## Custom  environment variables
   ## Use this to add environment variables to the container (including airflow variables to be overriden)
   customEnvironmentVariables:
-    CROSSREF_CONFIG_S3_BUCKET: ci-elife-data-pipeline
-    CROSSREF_CONFIG_S3_OBJECT_KEY: "airflow_test/crossref_event/elife-data-pipeline.config.yaml"
+    CROSSREF_CONFIG_S3_BUCKET: s3-bucket-where-crossref-configuration=object-is-stored
+    CROSSREF_CONFIG_S3_OBJECT_KEY: "crossref-event/yaml-config.yaml"
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
     GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
+    DEPLOYMENT_ENV: dev
   ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
-  secrets:
-    - name: credentials
-      secretsDir: /usr/local/airflow/.aws
-    - name: gcp-credentials
-      secretsDir: /usr/local/airflow/.gcp
-  ##
+  ## They should be created before helm is deployed
+  #secrets:
+  #  - name: credentials
+  #    secretsDir: /usr/local/airflow/.aws
+  #  - name: gcp-credentials
+  #    secretsDir: /usr/local/airflow/.gcp
   ## Configure pod disruption budget for the scheduler
   podDisruptionBudget:
     maxUnavailable: 1
@@ -56,9 +59,10 @@ web:
   initialDelaySeconds: "360"
 
 websiteAuthentication:
-  enabled: true
-  #keys AIRFLOW__GOOGLE__CLIENT_ID and AIRFLOW__GOOGLE__CLIENT_SECRET  (whose values must be created from google api)
-  #must be present in the secret
+  ## Set to true if google Oauth2 should be used for authentication
+  enabled: false
+  # keys AIRFLOW__GOOGLE__CLIENT_ID and AIRFLOW__GOOGLE__CLIENT_SECRET  (whose values must be created from google api)
+  # Must be pre-created as secret
   googleOAuthSecretName: google-auth
   googleOAuthCallbackRoute: "/oauth2callback"
   googleOAuthAuthenticatedDomain: "elifesciences.org"
@@ -72,49 +76,18 @@ scheduler:
     #   cpu: "500m"
     #   memory: "512Mi"
 
-##
 ## Configure logs
 logs:
   path: /usr/local/airflow/logs
 
-##
 ## Configure DAGs deployment and update
 dags:
   ## Note that this location is referred to in airflow.cfg, so if you change it, you must update airflow.cfg accordingly.
   path: /usr/local/airflow/dags
-  ## location where the dags repos are initially cloned to before being installed/copied to final directory
-  gitClonePath: /usr/local/airflow/temp_path
   ##
   ## Set to True to prevent pickling DAGs from scheduler to workers
   doNotPickle: false
-  ##
-  ## Configure Git repository to fetch DAGs
-  git:
-    ##
-    ## url to clone the git repository
 
-    git_urls:
-      - url: git@github.com:elifesciences/datahub-core-airflow-dags.git
-        name: core_dag
-        installPriority: 1
-        ## branch name, tag or sha1 to reset to
-        ref:
-    ## pre-created secret with key, key.pub and known_hosts file for private repos
-    secret: git-secret
-  initContainer:
-    ## Fetch the source code when the pods starts
-    enabled: true
-    ## Image for the init container (any image with git will do)
-    image:
-      ## docker-airflow image
-      repository: alpine/git
-      ## image tag
-      tag: 1.0.7
-      ## Image pull policy
-      ## values: Always or IfNotPresent
-      pullPolicy: IfNotPresent
-    ## install requirements.txt dependencies automatically
-    installRequirements: true
 
 dask:
   scheduler:
@@ -137,7 +110,7 @@ dask:
 
   worker:
     name: worker
-    replicas: 1
+    replicas: 2
     default_resources:  # overwritten by resource limits if they exist
       cpu: 1
       memory: "2GiB"

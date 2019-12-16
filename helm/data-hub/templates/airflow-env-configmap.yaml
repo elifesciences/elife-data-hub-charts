@@ -27,8 +27,6 @@ data:
   AIRFLOW__CORE__BASE_LOG_FOLDER: "{{ .Values.logs.path }}"
   AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: "{{ printf "%s/%s" .Values.logs.path "dag_processor_manager/dag_processor_manager.log" }}"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: "{{ printf "%s/%s" .Values.logs.path "scheduler" }}"
-  AIRFLOW__WEBSERVER__BASE_URL: "http://localhost:8080"
-  AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "True"
 
   # Disabling XCom pickling for forward compatibility
   AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "false"
@@ -41,6 +39,7 @@ data:
   AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
   # Note: changing `Values.airflow.customEnvironmentVariables` won't change the configmap checksum and so won't make
   # the pods to restart
+
   {{- range $setting, $option := .Values.airflow.customEnvironmentVariables }}
   {{ $setting }}: "{{ $option }}"
   {{- end }}

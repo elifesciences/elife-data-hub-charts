@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "airflow.fullname" . }}-scheduler
+  labels:
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name }}
+    component: scheduler
+    chart: {{ template "airflow.chart" . }}
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: {{ template "airflow.name" . }}
+      component: scheduler
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config-env: {{ include (print $.Template.BasePath "/airflow-env-configmap.yaml") . | sha256sum }}
+      labels:
+        app: {{ template "airflow.name" . }}
+        component: scheduler
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.airflow.image.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.airflow.image.pullSecret }}
+      {{- end }}
+      restartPolicy: Always
+      containers:
+        - name: {{ .Chart.Name }}-scheduler
+          image: {{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy}}
+          envFrom:
+          - configMapRef:
+              name: "{{ template "airflow.fullname" . }}-env"
+          env:
+          {{- include "airflow.mapenvsecrets" . | indent 10 }}
+          resources:
+            {{ toYaml .Values.scheduler.resources | nindent 12 }}
+          volumeMounts:
+          {{- range .Values.airflow.secrets }}
+            - name: {{ .name }}-volume
+              readOnly: true
+              mountPath: {{ .secretsDir }}/{{ .name }}
+          {{- end }}
+          args:
+            - "bash"
+            - "-c"
+            - >
+              echo 'waiting 10s...' &&
+              sleep 10 &&
+              export PATH=/usr/local/airflow/.local/bin:$PATH &&
+              {{- if .Values.airflow.initdb }}
+              echo "executing initdb" &&
+              airflow initdb &&
+              {{- end }}
+              echo "executing scheduler" &&
+              airflow scheduler -n {{ .Values.airflow.schedulerNumRuns }}
+      volumes:
+        {{- range .Values.airflow.secrets }}
+        - name: {{ .name }}-volume
+          secret:
+            secretName: {{ .name }}
+        {{- end }}

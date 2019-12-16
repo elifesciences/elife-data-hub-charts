@@ -1,4 +1,3 @@
-# dask scheduler
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,7 +9,7 @@ metadata:
     chart: {{ template "airflow.chart" . }}
     component: dask-scheduler
   annotations:
-    # ensures that checksum of file changes every time helm unpdate is called, and installeation is updated
+    # ensures that checksum of file changes every time helm unpdate is called, and installetion is updated
     # even when there is no change to the any other values in the file
     timestamp: "{{ date "20060102150405" .Release.Time }}"
 spec:
