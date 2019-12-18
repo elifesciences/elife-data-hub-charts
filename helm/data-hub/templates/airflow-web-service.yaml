@@ -17,7 +17,7 @@ metadata:
     ##enabling service.beta.kubernetes.io/aws-load-balancer-backend-protocol slows down the webserver response
     ##don't know the reason yet
     #service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: {{ .Values.airflow.service.externalPort | default 443 }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "{{ .Values.airflow.service.externalPort | default 443 }}"
     {{- end }}
 spec:
   type: {{ .Values.airflow.service.type }}
