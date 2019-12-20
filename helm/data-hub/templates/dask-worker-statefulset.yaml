@@ -47,6 +47,8 @@ spec:
           env:
           {{- include "airflow.mapenvsecrets" . | indent 10 }}
           volumeMounts:
+            - name: scripts
+              mountPath: {{ .Values.airflow.customEnvironmentVariables.DAG_APP_CONFIGURATION | default /usr/local/ariflow/conf }}
           {{- range .Values.airflow.secrets }}
             - name: {{ .name }}-volume
               readOnly: true
@@ -67,6 +69,14 @@ spec:
                   {{ .Values.dask.worker.resources.limits.cpu | default .Values.dask.worker.default_resources.cpu | quote }} --memory-limit {{ .Values.dask.worker.resources.limits.memory | default .Values.dask.worker.default_resources.memory | quote }}
                 {{- end }}
       volumes:
+        - name: scripts
+          configMap:
+            name: "{{ template "airflow.fullname" . }}-app-config"
+            items:
+              {{- range .Values.dagAplicationConfigurationFiles.mountedFiles }}
+              - key: {{ .key }}
+                path: {{ .relativeMountedPath }}
+              {{- end }}
         {{- range .Values.airflow.secrets }}
         - name: {{ .name }}-volume
           secret:

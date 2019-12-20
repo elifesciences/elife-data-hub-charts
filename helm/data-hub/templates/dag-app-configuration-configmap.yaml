@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ template "airflow.fullname" . }}-app-config"
+  labels:
+    app: {{ template "airflow.name" . }}
+    chart: {{ template "airflow.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    timestamp: "{{ date "20060102150405" .Release.Time }}"
+data:
+  {{- range .Values.dagAplicationConfigurationFiles.mountedFiles }}
+  {{ .key }}: {{ $.Files.Get .relativeLocalFileLocation | toYaml | indent 4 }}
+  {{- end }}

@@ -27,6 +27,6 @@ spec:
     release: {{ .Release.Name }}
   ports:
     - name: https
-      port: {{ .Values.airflow.service.externalPort | default 443 }}
+      port: {{ .Values.airflow.service.externalPort | default 80 }}
       protocol: TCP
       targetPort: 8080
