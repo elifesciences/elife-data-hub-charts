@@ -29,11 +29,15 @@ airflow:
   ## Use this to add environment variables to the container (including airflow variables to be overriden)
   customEnvironmentVariables:
     DAG_APP_CONFIGURATION: /usr/local/airflow/app-config
-    CROSSREF_CONFIG_S3_BUCKET: s3-bucket-where-crossref-configuration=object-is-stored
-    CROSSREF_CONFIG_S3_OBJECT_KEY: "crossref-event/yaml-config.yaml"
+    EXTRACT_KEYWORDS_SCHEDULE_INTERVAL: "@daily"
+    GOOGLE_SPREADSHEET_SCHEDULE_INTERVAL: "@daily"
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
+
+    CROSSREF_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
+    SPREADSHEET_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
+
     GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
-    DEPLOYMENT_ENV: dev
+
 
   ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
   ## They should be created before helm is deployed
