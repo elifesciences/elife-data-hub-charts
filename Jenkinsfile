@@ -4,6 +4,7 @@ elifePipeline {
 
         stage 'Checkout', {
             checkout scm
+            commit = elifeGitRevision()
         }
 
         stage 'Helm lint chart', {
