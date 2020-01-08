@@ -1,8 +1,7 @@
 apiVersion: v1
-description: Elife Data Hub K8s Deployment Of Airflow for Managing Data Pipelines
+description: elife Data Hub K8s Deployment Of Airflow for Managing Data Pipelines
 name: data-hub
 version: 0.1.0
-appVersion: "latest"
 maintainers:
   - name: elifesciences
 
