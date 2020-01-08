@@ -83,8 +83,8 @@ scheduler:
     #   memory: "512Mi"
 
 
-#dagAplicationConfigurationFiles:
-  #mountedFiles:
+dagAplicationConfigurationFiles:
+  mountedFiles:
    # - relativeLocalFileLocation: ./some-dir/somefile1.extension
    #   relativeMountedPath: mount-dir/new-file-name1.extension
    #   key: mount-dir/new-file-name1.extension
