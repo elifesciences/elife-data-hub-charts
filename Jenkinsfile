@@ -1,11 +1,19 @@
 elifePipeline {
     node('containers-jenkins-plugin') {
+        def commit
+
         stage 'Checkout', {
             checkout scm
         }
 
         stage 'Helm lint chart', {
             sh "make helm-lint-charts"
+        }
+
+        elifeMainlineOnly {
+            stage 'Merge to master', {
+                elifeGitMoveToBranch commit, 'master'
+            }
         }
 
         elifeTagOnly { tag ->
