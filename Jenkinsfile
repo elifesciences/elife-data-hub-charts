@@ -10,7 +10,7 @@ elifePipeline {
 
         elifeTagOnly { tag ->
             stage 'Publish helm chart', {
-                sh "make push-charts-to-s3-repo"
+                sh "make S3_REPO_PREFIX=alfred push-charts-to-s3-repo"
             }
         }
     }
