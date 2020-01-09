@@ -85,10 +85,10 @@ scheduler:
 
 dagAplicationConfigurationFiles:
   mountedFiles:
-   # - relativeLocalFileLocation: ./some-dir/somefile1.extension
+   # - fileContent: ./some-dir/somefile1.extension
    #   relativeMountedPath: mount-dir/new-file-name1.extension
    #   key: mount-dir/new-file-name1.extension
-   # - relativeLocalFileLocation: ./some-dir/somefile2.extension
+   # - fileContent: ./some-dir/somefile2.extension
    #   relativeMountedPath:  mount-dir/new-file-name2.extension
    #   key: mount-dir/new-file-name1.extension
 

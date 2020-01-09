@@ -11,5 +11,5 @@ metadata:
     timestamp: "{{ date "20060102150405" .Release.Time }}"
 data:
   {{- range .Values.dagAplicationConfigurationFiles.mountedFiles }}
-  {{ .key }}: {{ $.Files.Get .relativeLocalFileLocation | toYaml | indent 4 }}
+  {{ .key }}: {{ .fileContent | toYaml | indent 4 }}
   {{- end }}
