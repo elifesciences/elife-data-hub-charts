@@ -24,6 +24,7 @@ spec:
     metadata:
       annotations:
         checksum/config-env: {{ include (print $.Template.BasePath "/airflow-env-configmap.yaml") . | sha256sum }}
+        timestamp: "{{ date "20060102150405" .Release.Time }}"
       labels:
         name: {{ template "dask.fullname" . }}-dask-worker
         app: {{ template "airflow.name" . }}
