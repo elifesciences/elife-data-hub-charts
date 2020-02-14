@@ -65,10 +65,7 @@ spec:
             - "bash"
             - "-c"
             - >
-                $AIRFLOW_HOME/worker.sh {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --no-bokeh
-                {{- if .Values.dask.worker.noOfProcessesPerPod }}
-                  --nprocs  {{ .Values.dask.worker.noOfProcessesPerPod }}
-                {{- end }}
+                $AIRFLOW_HOME/worker.sh {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --nthreads  {{ .Values.dask.worker.noOfProcessesPerPod | default 4 }} --no-dashboard
                 {{- if .Values.dask.worker.resources.limits }}
                   --memory-limit {{ .Values.dask.worker.resources.limits.memory | default .Values.dask.worker.default_resources.memory | quote }}
                 {{- end }}
