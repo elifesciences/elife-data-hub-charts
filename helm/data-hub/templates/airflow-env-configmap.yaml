@@ -28,6 +28,19 @@ data:
   AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: "{{ printf "%s/%s" .Values.logs.path "dag_processor_manager/dag_processor_manager.log" }}"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: "{{ printf "%s/%s" .Values.logs.path "scheduler" }}"
 
+  # configure smtp
+  {{- if .Values.airflowSmtp.enabled }}
+  AIRFLOW__SMTP__SMTP_HOST: "{{ .Values.airflowSmtp.smtpServerName }}"
+  AIRFLOW__SMTP__SMTP_STARTTLS: "{{ .Values.airflowSmtp.startTLS }}"
+  AIRFLOW__SMTP__SMTP_SSL: "{{ .Values.airflowSmtp.useSSL }}"
+  AIRFLOW__SMTP__SMTP_PORT: "{{ .Values.airflowSmtp.smtpServerPort }}"
+  AIRFLOW__SMTP__SMTP_MAIL_FROM: "{{ .Values.airflowSmtp.smtpMailFrom }}"
+  {{- if .Values.airflowSmtp.credential.enabled }}
+  AIRFLOW__SMTP__SMTP_USER: "{{ .Values.airflowSmtp.credential.user }}"
+  AIRFLOW__SMTP__SMTP_PASSWORD: "{{ .Values.airflowSmtp.credential.password }}"
+  {{- end }}
+  {{- end }}
+
   # Disabling XCom pickling for forward compatibility
   AIRFLOW__CORE__ENABLE_XCOM_PICKLING: "false"
   {{- if .Values.websiteAuthentication.enabled }}

@@ -1,0 +1,51 @@
+{{- if .Values.airflowSmtp.smtpServer.deployLocal }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.airflowSmtp.smtpServerName }}
+  labels:
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "airflow.chart" . }}
+    component: {{ template "airflow.name" . }}
+spec:
+  selector:
+    component: {{ .Values.airflowSmtp.smtpServerName }}
+    app: {{ template "airflow.name" . }}
+    release: {{ .Release.Name | quote }}
+  ports:
+    - name: smtp-port
+      port: {{ .Values.airflowSmtp.smtpServerPort }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.airflowSmtp.smtpServerName }}
+  labels:
+    component: {{ .Values.airflowSmtp.smtpServerName }}
+    app: {{ template "airflow.name" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+    chart: {{ template "airflow.chart" . }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: {{ .Values.airflowSmtp.smtpServerName }}
+      app: {{ template "airflow.name" . }}
+      release: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        component: {{ .Values.airflowSmtp.smtpServerName }}
+        app: {{ template "airflow.name" . }}
+        release: {{ .Release.Name | quote }}
+    spec:
+      containers:
+      - name: {{ .Values.airflowSmtp.smtpServerName }}
+        image: namshi/smtp
+        ports:
+        - containerPort: {{ .Values.airflowSmtp.smtpServerPort }}
+{{- end }}
