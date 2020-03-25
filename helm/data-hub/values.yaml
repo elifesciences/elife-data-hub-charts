@@ -32,11 +32,11 @@ airflow:
     EXTRACT_KEYWORDS_SCHEDULE_INTERVAL: "@daily"
     GOOGLE_SPREADSHEET_SCHEDULE_INTERVAL: "@daily"
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
-
     CROSSREF_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
     SPREADSHEET_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
 
     GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
+    AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: "one@gmail.com,two@yahoo.com"
 
 
   ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
@@ -91,6 +91,21 @@ dagAplicationConfigurationFiles:
    # - fileContent: ./some-dir/somefile2.extension
    #   relativeMountedPath:  mount-dir/new-file-name2.extension
    #   key: mount-dir/new-file-name1.extension
+
+airflowSmtp:
+  enabled: false
+  smtpServer:
+    deployLocal: false
+    smtpImage: namshi/smtp
+  smtpServerName: smtp-server
+  smtpServerPort: 25
+  smtpMailFrom: do-not-reply@donotreply.com
+  startTLS: false
+  useSSL: false
+  credential:
+    enabled: false
+    user: username
+    password: password
 
 
 ## Configure logs
