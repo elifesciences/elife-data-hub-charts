@@ -54,6 +54,12 @@ airflow:
   initdb: true
 
 web:
+  strategy:
+    # Smooth rolling update of the Web UI
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
   resources:
     # limits:
     #   cpu: "300m"
@@ -74,6 +80,11 @@ websiteAuthentication:
   googleOAuthAuthenticatedDomain: "elifesciences.org"
 
 scheduler:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
   resources: {}
     # limits:
     #   cpu: "1000m"
@@ -124,6 +135,8 @@ dags:
 dask:
   scheduler:
     name: scheduler
+    strategy:
+      type: RollingUpdate
     replicas: 1
     # "NodePort", "LoadBalancer" "ClusterIP"
     serviceType: "NodePort"
@@ -142,6 +155,11 @@ dask:
 
   worker:
     name: worker
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0
+        maxUnavailable: 100%
     replicas: 2
     noOfProcessesPerPod: 20
     default_resources:  # overwritten by resource limits if they exist

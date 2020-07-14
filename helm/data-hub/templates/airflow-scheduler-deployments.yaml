@@ -13,10 +13,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 100%
+    {{- toYaml .Values.scheduler.strategy | nindent 4 }}
   selector:
     matchLabels:
       app: {{ template "airflow.name" . }}

@@ -20,7 +20,7 @@ spec:
       release: {{ .Release.Name | quote }}
       component: dask-scheduler
   strategy:
-    type: RollingUpdate
+    {{- toYaml .Values.dask.scheduler.strategy | nindent 4 }}
   template:
     metadata:
       labels:
