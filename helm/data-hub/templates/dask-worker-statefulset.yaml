@@ -63,8 +63,8 @@ spec:
             - "-c"
             - >
                 $AIRFLOW_HOME/worker.sh {{ template "dask.fullname" . }}-scheduler:{{ .Values.dask.scheduler.servicePort }} --nthreads  {{ .Values.dask.worker.noOfProcessesPerPod | default 4 }} --no-dashboard
-                {{- if .Values.dask.worker.resources.limits }}
-                  --memory-limit {{ .Values.dask.worker.resources.limits.memory | default .Values.dask.worker.default_resources.memory | quote }}
+                {{- if .Values.dask.worker.daskMemoryLimit }}
+                  --memory-limit {{ .Values.dask.worker.daskMemoryLimit | quote }}
                 {{- end }}
       volumes:
         - name: scripts

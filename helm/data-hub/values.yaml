@@ -162,9 +162,8 @@ dask:
         maxUnavailable: 100%
     replicas: 2
     noOfProcessesPerPod: 20
-    default_resources:  # overwritten by resource limits if they exist
-      cpu: 1
-      memory: "2GiB"
+    # the dask memory limit only considers dask data structures
+    daskMemoryLimit: ""
     resources: {}
     dask_worker: "dask-worker"
     #  limits:
