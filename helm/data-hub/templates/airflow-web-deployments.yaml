@@ -14,11 +14,7 @@ spec:
   replicas: {{ .Values.airflow.webReplicas }}
   minReadySeconds: 120
   strategy:
-    # Smooth rolling update of the Web UI
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+    {{- toYaml .Values.web.strategy | nindent 4 }}
   selector:
     matchLabels:
       app: {{ template "airflow.name" . }}
