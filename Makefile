@@ -6,7 +6,7 @@ helm-lint-charts:
 	cd helm/ && helm lint *
 
 helm-dry-run-charts:
-	cd helm/ && helm  install  --dry-run --debug data-hub  --namespace data-hub
+	cd helm/ && helm dependency update data-hub && helm  install  --dry-run --debug data-hub  --namespace data-hub
 
 push-charts-to-s3-repo: helm-lint-charts
 	cd helm && rm -f *.tgz
