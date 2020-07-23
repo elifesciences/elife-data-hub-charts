@@ -7,8 +7,9 @@ elifePipeline {
             commit = elifeGitRevision()
         }
 
-        stage 'Helm lint chart', {
+        stage 'Helm lint and dry run chart', {
             sh "make helm-lint-charts"
+            sh "make helm-dry-run-charts"
         }
 
         elifeMainlineOnly {
