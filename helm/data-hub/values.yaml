@@ -28,22 +28,24 @@ airflow:
   ## Custom  environment variables
   ## Use this to add environment variables to the container (including airflow variables to be overriden)
   customEnvironmentVariables:
+   # DAG_APP_CONFIGURATION - Directory in the pod where data pipeline application configuration files are
+   # mounted.
     DAG_APP_CONFIGURATION: /usr/local/airflow/app-config
     EXTRACT_KEYWORDS_SCHEDULE_INTERVAL: "@daily"
     GOOGLE_SPREADSHEET_SCHEDULE_INTERVAL: "@daily"
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
     CROSSREF_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
     SPREADSHEET_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
-
     GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
+    #provides list of email addresses to which the airflow can send emails when required to
     AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: "one@gmail.com,two@yahoo.com"
 
 
   ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
   ## They should be created before helm is deployed
   #secrets:
-  #  - name: credentials
-  #    secretsDir: /usr/local/airflow/.aws
+  #  - name: credentials #name of the secret
+  #    secretsDir: /usr/local/airflow/.aws # where they are mounted in the pod
   #  - name: gcp-credentials
   #    secretsDir: /usr/local/airflow/.gcp
   ## Configure pod disruption budget for the scheduler
@@ -54,6 +56,7 @@ airflow:
   initdb: true
 
 web:
+  # K8s resource spec for webserver pod
   strategy:
     # Smooth rolling update of the Web UI
     type: RollingUpdate
@@ -95,14 +98,28 @@ scheduler:
 
 
 dagAplicationConfigurationFiles:
-  mountedFiles:
-   # - fileContent: ./some-dir/somefile1.extension
-   #   relativeMountedPath: mount-dir/new-file-name1.extension
-   #   key: mount-dir/new-file-name1.extension
-   # - fileContent: ./some-dir/somefile2.extension
-   #   relativeMountedPath:  mount-dir/new-file-name2.extension
-   #   key: mount-dir/new-file-name1.extension
+  # This is used for mounting data pipeline configuration as configuration files in the pod using the
+  # configmap https://github.com/elifesciences/elife-data-hub-charts/blob/develop/helm/data-hub/templates/dag-app-configuration-configmap.yaml
+  # Each array entry represent a key-value pair of the configmap data entry, as well as the location where
+  # that configmap entry should be mounted in the pod
 
+  mountedFiles:
+  # key: here represent the keyname of the configmap data record entry
+  # - key: mount-dir/new-file-name1.extension
+  # fileContent  - is the content of the data pipeline configuration, note that this file content can be
+  # given directly in the values.yaml or it can be provided by overriden the values as prt of the commandline parameters
+  #   fileContent: |
+  #      gcpProj: some-gcp-proj
+  #      dataPipelineId: some data pipelineid
+  #   relativeMountedPath - is the directory where the file should be mounted relatve to the
+  # airflow.customEnvironmentVariables.DAG_APP_CONFIGURATION defined about
+  #   relativeMountedPath: mount-dir/new-file-name1.extension
+  # - fileContent: ./some-dir/somefile2.extension
+  #    relativeMountedPath:  mount-dir/new-file-name2.extension
+  #    key: mount-dir/new-file-name1.extension
+
+# configuration for the smtp service as given in
+# https://github.com/elifesciences/elife-data-hub-charts/blob/develop/helm/data-hub/templates/airflow-env-configmap.yaml
 airflowSmtp:
   enabled: false
   smtpServer:
@@ -121,6 +138,7 @@ airflowSmtp:
 
 ## Configure logs
 logs:
+  # directory where the logs should be written in the pods
   path: /usr/local/airflow/logs
 
 ## Configure DAGs deployment and update
@@ -149,10 +167,13 @@ dask:
     #    cpu: 1.8
     #    memory: 6G
 
+  # dask web ui port
+  # configure the webui to monitor the dask workers
+  # e.g. tasks cpu and memory usage and duration
   webUI:
     name: webui
     servicePort: 8787
-
+  # confgures the dask worker
   worker:
     name: worker
     strategy:
