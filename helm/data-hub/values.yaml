@@ -38,7 +38,7 @@ airflow:
     SPREADSHEET_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
     GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
     #provides list of email addresses to which the airflow can send emails when required to
-    AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: "one@gmail.com,two@yahoo.com"
+    AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: ""
 
 
   ## Secrets which will be mounted as a file at `secretsDir/<secret name>`.
