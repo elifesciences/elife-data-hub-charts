@@ -30,13 +30,13 @@ airflow:
   customEnvironmentVariables:
    # DAG_APP_CONFIGURATION - Directory in the pod where data pipeline application configuration files are
    # mounted.
-    DAG_APP_CONFIGURATION: /usr/local/airflow/app-config
+    DAG_APP_CONFIGURATION: /home/airflow/app-config
     EXTRACT_KEYWORDS_SCHEDULE_INTERVAL: "@daily"
     GOOGLE_SPREADSHEET_SCHEDULE_INTERVAL: "@daily"
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
-    CROSSREF_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
-    SPREADSHEET_CONFIG_FILE_PATH: "/usr/local/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
-    GOOGLE_APPLICATION_CREDENTIALS: /usr/local/airflow/.gcp/gcp_credentials.json
+    CROSSREF_CONFIG_FILE_PATH: "/home/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
+    SPREADSHEET_CONFIG_FILE_PATH: "/home/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
+    GOOGLE_APPLICATION_CREDENTIALS: /home/airflow/.gcp/gcp_credentials.json
     #provides list of email addresses to which the airflow can send emails when required to
     AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: ""
 
@@ -45,9 +45,9 @@ airflow:
   ## They should be created before helm is deployed
   #secrets:
   #  - name: credentials #name of the secret
-  #    secretsDir: /usr/local/airflow/.aws # where they are mounted in the pod
+  #    secretsDir: /home/airflow/.aws # where they are mounted in the pod
   #  - name: gcp-credentials
-  #    secretsDir: /usr/local/airflow/.gcp
+  #    secretsDir: /home/airflow/.gcp
   ## Configure pod disruption budget for the scheduler
   podDisruptionBudget:
     maxUnavailable: 1
@@ -139,12 +139,12 @@ airflowSmtp:
 ## Configure logs
 logs:
   # directory where the logs should be written in the pods
-  path: /usr/local/airflow/logs
+  path: /opt/airflow/logs
 
 ## Configure DAGs deployment and update
 dags:
   ## Note that this location is referred to in airflow.cfg, so if you change it, you must update airflow.cfg accordingly.
-  path: /usr/local/airflow/dags
+  path: /opt/airflow/dags
   ##
   ## Set to True to prevent pickling DAGs from scheduler to workers
   doNotPickle: false

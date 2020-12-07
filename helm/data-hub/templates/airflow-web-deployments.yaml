@@ -65,8 +65,8 @@ spec:
             - >
               echo 'waiting {{ .Values.web.initialStartupDelay }}s...' &&
               sleep {{ .Values.web.initialStartupDelay }} &&
-              mkdir -p /usr/local/airflow/.local/bin &&
-              export PATH=/usr/local/airflow/.local/bin:$PATH &&
+              mkdir -p /home/airflow/.local/bin &&
+              export PATH=/home/airflow/.local/bin:$PATH &&
               echo 'executing webserver...' &&
               airflow webserver
       volumes:
