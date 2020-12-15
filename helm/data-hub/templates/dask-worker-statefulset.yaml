@@ -46,7 +46,7 @@ spec:
           {{- include "airflow.mapenvsecrets" . | indent 10 }}
           volumeMounts:
             - name: scripts
-              mountPath: {{ .Values.airflow.customEnvironmentVariables.DAG_APP_CONFIGURATION | default "/usr/local/airflow/conf" }}
+              mountPath: {{ .Values.airflow.customEnvironmentVariables.DAG_APP_CONFIGURATION | default "/home/airflow/conf" }}
           {{- range .Values.airflow.secrets }}
             - name: {{ .name }}-volume
               readOnly: true

@@ -56,7 +56,7 @@ spec:
             - >
               echo 'waiting 10s...' &&
               sleep 10 &&
-              export PATH=/usr/local/airflow/.local/bin:$PATH &&
+              export PATH=/home/airflow/.local/bin:$PATH &&
               {{- if .Values.airflow.initdb }}
               echo "executing initdb" &&
               airflow initdb &&
