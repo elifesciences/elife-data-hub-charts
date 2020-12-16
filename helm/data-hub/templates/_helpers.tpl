@@ -34,6 +34,16 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Bash command which echos the DB connection string in SQLAlchemy format.
+NOTE:
+ - used by `AIRFLOW__CORE__SQL_ALCHEMY_CONN_CMD`
+*/}}
+{{- define "DATABASE_SQLALCHEMY_CMD" -}}
+echo -n "postgresql+psycopg2://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DB}"
+{{- end -}}
+
+
+{{/*
 Create a random string if the supplied key does not exist
 */}}
 {{- define "airflow.defaultsecret" -}}
@@ -52,10 +62,10 @@ See script/entrypoint.sh in that repo for more info.
 The key names for postgres are fixed, which is consistent with the subcharts.
 */}}
 {{- define "airflow.mapenvsecrets" }}
-  - name: POSTGRES_USER
+  - name: DATABASE_USER
     value: {{ default "postgres" .Values.postgresql.postgresUser | quote }}
   {{- if or .Values.postgresql.existingSecret .Values.postgresql.enabled }}
-  - name: POSTGRES_PASSWORD
+  - name: DATABASE_PASSWORD
     valueFrom:
       secretKeyRef:
         name: {{ default (include "airflow.postgresql.fullname" .) .Values.postgresql.existingSecret }}
