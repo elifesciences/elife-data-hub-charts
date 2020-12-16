@@ -12,10 +12,15 @@ metadata:
 data:
   ## Force UTC timezone
   TZ: Etc/UTC
-  ## Postgres DB configuration
-  POSTGRES_HOST: "{{ template "airflow.postgresql.fullname" . }}"
-  POSTGRES_PORT: "{{ .Values.postgresql.service.port }}"
-  POSTGRES_DB: "{{ .Values.postgresql.postgresDatabase }}"
+  ## DB configuration (For Postgres)
+  DATABASE_HOST: "{{ template "airflow.postgresql.fullname" . }}"
+  DATABASE_PORT: "{{ .Values.postgresql.service.port }}"
+  DATABASE_DB: "{{ .Values.postgresql.postgresDatabase }}"
+
+  # bash command which echos the DB connection string in SQLAlchemy format
+  DATABASE_SQLALCHEMY_CMD: |-
+    {{ include "DATABASE_SQLALCHEMY_CMD" . }}
+
   FERNET_KEY: "{{ .Values.airflow.fernetKey }}"
   DO_WAIT_INITDB: "false"
   ## Custom Airflow settings
@@ -27,6 +32,10 @@ data:
   AIRFLOW__CORE__BASE_LOG_FOLDER: "{{ .Values.logs.path }}"
   AIRFLOW__CORE__DAG_PROCESSOR_MANAGER_LOG_LOCATION: "{{ printf "%s/%s" .Values.logs.path "dag_processor_manager/dag_processor_manager.log" }}"
   AIRFLOW__SCHEDULER__CHILD_PROCESS_LOG_DIRECTORY: "{{ printf "%s/%s" .Values.logs.path "scheduler" }}"
+  
+  # bash command which echos the DB connection string in SQLAlchemy format
+  AIRFLOW__CORE__SQL_ALCHEMY_CONN_CMD: |-
+    bash -c 'eval "$DATABASE_SQLALCHEMY_CMD"'
 
   # configure smtp
   {{- if .Values.airflowSmtp.enabled }}
