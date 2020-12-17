@@ -36,7 +36,6 @@ airflow:
     CROSS_REF_IMPORT_SCHEDULE_INTERVAL: "@daily"
     CROSSREF_CONFIG_FILE_PATH: "/home/airflow/app-config/crossref-event/crossref-event-data-pipeline.config.yaml"
     SPREADSHEET_CONFIG_FILE_PATH: "/home/airflow/app-config/google-spreadsheet/spreadsheet-data-pipeline.config.yaml"
-    #GOOGLE_APPLICATION_CREDENTIALS: /home/airflow/.config/gcloud/credentials.json
     GOOGLE_APPLICATION_CREDENTIALS: /home/airflow/.gcp/gcp_credentials.json
     #provides list of email addresses to which the airflow can send emails when required to
     AIRFLOW_NOTIFICATION_EMAIL_CSV_LIST: ""
@@ -47,8 +46,8 @@ airflow:
   #secrets:
   #  - name: credentials #name of the secret
   #    secretsDir: /home/airflow/.aws # where they are mounted in the pod
-  #  - name: credentials
-  #    secretsDir: /home/airflow/.config/gcloud/
+  #  - name: gcp-credentials
+  #    secretsDir: /home/airflow/.gcp/
   ## Configure pod disruption budget for the scheduler
   podDisruptionBudget:
     maxUnavailable: 1
