@@ -8,6 +8,7 @@ elifePipeline {
         }
 
         stage 'Helm lint and dry run chart', {
+            sh "make helm-dependency-update"
             sh "make helm-lint-charts"
             sh "make helm-dry-run-charts"
         }
