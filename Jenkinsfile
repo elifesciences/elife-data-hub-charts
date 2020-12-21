@@ -15,6 +15,10 @@ elifePipeline {
             sh "make helm-dry-run-charts"
         }
 
+        stage 'Revert temporary git changes', {
+            sh "git checkout ."
+        }
+
         elifeMainlineOnly {
             stage 'Merge to master', {
                 elifeGitMoveToBranch commit, 'master'
