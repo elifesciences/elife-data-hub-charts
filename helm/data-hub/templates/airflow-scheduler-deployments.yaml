@@ -48,7 +48,7 @@ spec:
           {{- range .Values.airflow.secrets }}
             - name: {{ .name }}-volume
               readOnly: true
-              mountPath: {{ .secretsDir }}/{{ .name }}
+              mountPath: {{ .secretsDir }}
           {{- end }}
           args:
             - "bash"
